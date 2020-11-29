@@ -21,15 +21,16 @@ from Crypto.PublicKey import RSA
 
 # RSA implementations
 
-def generate_rsa_keys(mod, key_type,e=65537):
+
+
+def generate_rsa_keys(modulus, key_type, mod_exp = 65537):
     """
     Function that generates a pair of RSA Keys, and returns either the private or public key depending on the argument
     mod -> RSA modulus length
-    e -> public exponent value. if left blank it defaults to 65537
+    mod_exp -> public exponent value. if left blank it defaults to 65537
     key_type -> takes in either 'private' or 'public' to return either the private or public key. If left blank, returns both
     """
-    mod_len = mod
-    key = RSA.generate(mod_len, e)
+    key = RSA.generate(modulus, e=mod_exp)
     private_key = key.exportKey()
     public_key = key.publickey().exportKey()
     if key_type == 'private' or key_type == 'Private':
@@ -39,13 +40,8 @@ def generate_rsa_keys(mod, key_type,e=65537):
     else:
         return private_key, public_key
 
-priv_a = generate_rsa_keys(1024,'private')
-pub_b = generate_rsa_keys(1024,'public')
-print(priv_a)
-print("\n")
-print(pub_b)
-
-
+server_private_key = generate_rsa_keys(1024,'private')
+server_public_key = generate_rsa_keys(1024,'public')
 
 
 
