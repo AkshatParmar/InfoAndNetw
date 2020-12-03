@@ -1,6 +1,7 @@
 ##################################################################################
 #### THIS IS JUST FOR ME TO TEST STUFF NOT FOR THE FINAL ITERATION OF PROJECT ####
 ##################################################################################
+import json
 import binascii
 import os
 from Crypto.PublicKey import RSA
@@ -11,21 +12,25 @@ from Crypto.Hash import SHA256
 from Crypto.Signature import pss
 
 
-# dummy variables for testing
-#dummy_ssn = input("Enter your SSN: ")
-#dummy_birth = input("Enter your birthdate (dd/mm/yyyy): ")
-dummy_vote = str(input("Enter your preferred Candidate: "))
+with open("user.json") as file:
+    vote_data = json.load(file)
 
 
-#dummy_ssn = dummy_ssn.encode()
-#dummy_birth = dummy_birth.encode()
+
+vote_test = vote_data['0']['Votes']
+dummy_vote = str(vote_test)
+#peepo = peepo.encode()
+#print(peepo)
+
+#dummy_vote = str(input("Enter your preferred Candidate: "))
+
+
+
 dummy_vote = dummy_vote.encode()
 
-#ssn_sec = binascii.hexlify(dummy_ssn)
-#birth_sec = binascii.hexlify(dummy_birth)
+
 vote_sec = binascii.hexlify(dummy_vote)
-print(vote_sec)
-# ssn_return = binascii.unhexlify(ssn_sec)
+
 # vote_return = binascii.unhexlify(vote_sec)
 
 
