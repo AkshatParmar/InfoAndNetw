@@ -18,9 +18,10 @@ with open("user.json") as file:
 
 
 vote_test = vote_data['0']['Votes']
-dummy_vote = str(vote_test)
-#peepo = peepo.encode()
-#print(peepo)
+vote = list(vote_test.values())
+dummy_vote = str(vote)
+
+
 
 #dummy_vote = str(input("Enter your preferred Candidate: "))
 
