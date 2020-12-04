@@ -15,25 +15,29 @@ from Crypto.Signature import pss
 with open("user.json") as file:
     vote_data = json.load(file)
 
+votes_list = []
+for i in range(len(vote_data)):
+    vote = str(i)
+    ind_vote = vote_data[vote]['Votes']
+    vote_l= list(ind_vote.values())
+    votes_list.append(vote_l)
+print(votes_list)
 
 
-vote_test = vote_data['0']['Votes']
-vote = list(vote_test.values())
-dummy_vote = str(vote)
+def string_list(x):
+    """
+    x: -> a list
+    return: the same list, but the values will be a string
+    """
+    str_lst = list(map(str, x))
+    return str_lst
 
+dummy_vote = []
+for i in range(len(vote_data)):
+    lst_str = string_list(votes_list[i])
+    dummy_vote.append(lst_str)
 
-
-#dummy_vote = str(input("Enter your preferred Candidate: "))
-
-
-
-dummy_vote = dummy_vote.encode()
-
-
-vote_sec = binascii.hexlify(dummy_vote)
-
-# vote_return = binascii.unhexlify(vote_sec)
-
+print(dummy_vote)
 
 # RSA implementations
 
@@ -77,47 +81,96 @@ aes_key = aes_key_iv[:32]
 aes_iv = aes_key_iv[32:]
 
 
+## Generate User Keys
+private_name_start = "user_private"
+public_name_start = "user_public"
+private_list = []
+public_list = []
+for i in range(len(vote_data)):
+    user_id = str(i)
+    private_name = private_name_start + '_' + user_id + '.pem'
+    private_list.append(private_name)
+    public_name = public_name_start + '_' + user_id + '.pem'
+    public_list.append(public_name)
+for i in range(len(vote_data)):
+    generate_rsa_keys(1024,private_list[i],public_list[i])
 
-
-user_keys = generate_rsa_keys(1024, 'user_private.pem','user_public.pem')
 server_keys = generate_rsa_keys(1024,'server_private.pem','server_public.pem')
 
-server_public_key = RSA.importKey(open('server_public.pem').read())
-server_private_key = RSA.importKey(open('server_private.pem').read())
+def vote_encrypt(vote_list,user):
+    """
+    Encrypts using the Public Key
+    vote_list: a list of the votes to be encrypted
+    user: UserID from the JSON in order to use their key to encrypt
+    :return: sec_vote -> Encrypted RSA
+    """
+    user_public_key = RSA.importKey(open(public_list[user]).read())
 
-user_public_key = RSA.importKey(open('user_public.pem').read())
-user_private_key = RSA.importKey(open('user_private.pem').read())
+    encoded_value = []
+    for i in range(len(vote_list)):
+        d = vote_list[i].encode()
+        rook = binascii.hexlify(d)
+        encoded_value.append(rook)
 
-vote_cipher = PKCS1_OAEP.new(user_public_key)
-sec_vote = vote_cipher.encrypt(vote_sec) # encrypt using user private key
-print(sec_vote)
 
-# Encrypt using AES
-aes_cipher = AES.new(aes_key, AES.MODE_CBC, aes_iv) # CBC Mode AES - for encryption
-ciphered_data = aes_cipher.encrypt(pad(sec_vote, AES.block_size))
-print(ciphered_data)
+    encrypted_vote = []
+    for i in range(len(vote_list)):
+        vote_ciper = PKCS1_OAEP.new(user_public_key)
+        sec_vote = vote_ciper.encrypt(encoded_value[i])
+        encrypted_vote.append(sec_vote)
 
-#Decrypt AES
-aes_plain = AES.new(aes_key, AES.MODE_CBC, aes_iv) # CBC Mode AES - for decryption
-original_sec_vote = unpad(aes_plain.decrypt(ciphered_data), AES.block_size)
-print(original_sec_vote)
+    return encrypted_vote
 
-# Decrypt RSA using RSA private key
-vote_plaintext = PKCS1_OAEP.new(user_private_key)
-decrypt_vote = vote_plaintext.decrypt(original_sec_vote)
-print(decrypt_vote)
+test_encrypt = vote_encrypt(dummy_vote[0],0)
+print(test_encrypt)
 
-vote_return = binascii.unhexlify(decrypt_vote)
-print(vote_return.decode())
+def vote_decrypt(encrypted_list, user):
+    """
+    :param encrypted_list: list containing the encrypted elements
+    :param user: the UserID from the JSON
+    :return: final_decrypt -> decrypted output
+    """
+    user_private_key = RSA.importKey(open(private_list[user]).read())
+
+    decrypted_vote = []
+    for i in range(len(encrypted_list)):
+        vote_plaintext = PKCS1_OAEP.new(user_private_key)
+        decrypt_vote = vote_plaintext.decrypt(encrypted_list[i])
+        decrypted_vote.append(decrypt_vote)
+
+    decode_vote = []
+    for i in range(len(encrypted_list)):
+        bishop = binascii.unhexlify(decrypted_vote[i])
+        d = bishop.decode()
+        decode_vote.append(d)
+
+
+    final_decrypt = list(map(int, decode_vote))
+    return final_decrypt
+
+test_decrypt = vote_decrypt(test_encrypt,0)
+print(test_decrypt)
+
+
+# # Encrypt using AES
+# aes_cipher = AES.new(aes_key, AES.MODE_CBC, aes_iv) # CBC Mode AES - for encryption
+# ciphered_data = aes_cipher.encrypt(pad(sec_vote, AES.block_size))
+# print(ciphered_data)
+#
+# #Decrypt AES
+# aes_plain = AES.new(aes_key, AES.MODE_CBC, aes_iv) # CBC Mode AES - for decryption
+# original_sec_vote = unpad(aes_plain.decrypt(ciphered_data), AES.block_size)
+# print(original_sec_vote)
+
+
 
 # Candidate name - here so i can just copy paste to console : Marcus Maragh
 
-# Decrypt RSA
-#vote_decrypt = PKCS1_OAEP.new(user_public_key)
-#what = vote_decrypt.decrypt(plaintext)
-#print(what)
+
+
+
 ## signature
-# h = SHA256.new(ssn_sec)
+# h = SHA256.new(vote_sec)
 # signature = pss.new(user_private_key).sign(h)
 #
 # verifier = pss.new(user_public_key)
