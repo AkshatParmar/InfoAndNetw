@@ -1,4 +1,6 @@
 from data_access import *
+import os
+import binascii
 
 def password_check(passwd): 
       
@@ -63,10 +65,55 @@ def register_user(jda, username, password, name, dob, ssn):
         "DOB": dob,
         "SSN": ssn
     }
+    # DOB/SSN/Password all need to be encrypted somehow 
+    # Password can be simple encryption
+    # DOB and SSN should be public/private key RSA 
     return jda.insert(user, username)
         
+def login(jda, username, password):
+    session_jda = JsonDataAccess("sessions.json")
+    user_info = jda.search(username)
+    if user_info is None:
+        return None
+
+    # decrypt password
+    decrypted_password = user_info["Password"]
+
+    if decrypted_password == password:
+        #randomly generate a session_id and store that combo with the username somewhere
+        while True:
+            session_id = binascii.hexlify(os.urandom(16)).decode('utf-8')
+            if session_jda.insert({"username":username},session_id):
+                break
+        return session_id
+    
+    return None
+
+def logout(session_id):
+    session_jda = JsonDataAccess("sessions.json")
+    if session_jda.delete(session_id) is False:
+        print("Invalid session_id, session was corrupted, please close application and re-run")
+    return
+
+def submit_vote(session_id, ssn, dob, votes):
+    # Create e signature with ssn and dob
+    e_signature = ssn+dob 
+    
+    payload = {
+        "SessionID": session_id,
+        "Votes": votes
+    }
+
+    # RSA encrypt the payload 
+    encrypted_payload = str(payload)
+    # send payload to server (probably can just use basic flask request for this)
+    print(encrypted_payload + e_signature)
+
+    print("Successfully submitted vote") # Get response from server and if good then print this otherwise throw error
+
 if __name__ == "__main__":
     users_jda = JsonDataAccess("users.json")
+    session_id = None
     while True:
         print("""
         Actions
@@ -76,7 +123,7 @@ if __name__ == "__main__":
         3) Vote
         """)
         action = input("What would you like to do: ")
-        if int(action) not in [1,2,3]:
+        if action not in '1 2 3':
             print("Action not recognized! Invalid input.")
             continue
         if int(action) == 1:
@@ -84,6 +131,7 @@ if __name__ == "__main__":
             username = ""
             while True:
                 username = input("What would you like your username to be: ")
+                # this should probably be abstracted outside of the main logic
                 if users_jda.search(username) is None:
                     break
                 print("User already created with this username, please try again.")
@@ -114,7 +162,89 @@ if __name__ == "__main__":
                 print("Account successfully created")
                 break
         elif int(action) == 2:
-            print("Login")
-        else:
+            attempts = 0
+            while attempts < 3: 
+                username = input("Username: ")
+                password = input("Password: ")
+                session_id = login(users_jda, username, password)
+                if session_id is not None:
+                    print("Success! You are now logged in as:", username)
+                    break
+                print("Invalid username/password, try again.")
+            break
+        elif int(action) == 3:
             print("You are not currently logged in, please log in to vote.")
-        break
+        else:
+            break
+    
+    while session_id is not None:
+        print("""
+        Actions
+        ---------------------------------------------
+        1) Vote
+        2) Logout
+        """)
+        action = input("What would you like to do: ")
+        if int(action) not in [1,2]:
+            print("Action not recognized! Invalid input.")
+            continue
+        if int(action) == 1:
+            president_choice = 0
+            state_senator_choice = 0
+            print("""
+                President
+                ----------------------------------------
+                1) (R) Donald Trump / Michael Pence
+                2) (D) Joe Biden / Kamala Harris
+                """)
+            while True:
+                
+                president_choice = input("Choice: ")
+                if president_choice in '1 2':
+                    break
+                print("Invalid choice, try again")
+            print("""
+                NJ State Senator
+                ----------------------------------------
+                1) (D) Cory Booker
+                2) (D) Lawrence Hamm
+                3) (R) Eugene Anagnos 
+                4) (R) Tricia Flanagan 
+                5) (R) Rik Mehta
+                6) (R) Natalie Rivera
+                7) (R) Hirsh Singh
+                """)
+            while True:
+                state_senator_choice = input("Choice: ")
+                if president_choice in '1 2 3 4 5 6 7':
+                    break
+                print("Invalid choice, try again")
+            dob = None
+            ssn = None
+            while True:
+                dob = input("What is your DOB (MM/DD/YYYY): ")
+                if not dob_check(dob):
+                    print("Invalid DOB, try again.")
+                    continue
+                break
+
+            while True:
+                ssn = input("What is your SSN (no dashes): ")
+                if len(ssn) == 9 and ssn.isnumeric():
+                    break
+                print("Invalid SSN, try again")
+            
+            votes = {
+                "President": president_choice,
+                "NJ State Senator": state_senator_choice
+            }
+
+            submit_vote(session_id, ssn, dob, votes)
+
+        elif int(action) == 2:
+            logout(session_id)
+            session_id = None
+        else:
+            break
+
+    print("You are not logged into an account, please re-run if you wish to log back in.")
