@@ -1,6 +1,7 @@
 from data_access import *
 import os
 import binascii
+import requests
 
 def password_check(passwd): 
       
@@ -107,9 +108,18 @@ def submit_vote(session_id, ssn, dob, votes):
     # RSA encrypt the payload 
     encrypted_payload = str(payload)
     # send payload to server (probably can just use basic flask request for this)
-    print(encrypted_payload + e_signature)
+    print(encrypted_payload + e_signature) #debug line -- can be removed once everything is added in
+    
+    request_body = {
+        "payload": encrypted_payload,
+        "e_sig": e_signature
+    }
 
-    print("Successfully submitted vote") # Get response from server and if good then print this otherwise throw error
+    r = requests.post("http://localhost:5000/vote", json=request_body)
+
+    print(r.text)
+    if r.status_code != 200:
+        print("Re-run application to attempt to resubmit vote if you believe this was an error.")
 
 if __name__ == "__main__":
     users_jda = JsonDataAccess("users.json")
