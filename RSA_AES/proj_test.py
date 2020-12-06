@@ -11,34 +11,6 @@ from Crypto.Util.Padding import pad, unpad
 from Crypto.Hash import SHA256
 from Crypto.Signature import pss
 
-
-with open("user.json") as file:
-    vote_data = json.load(file)
-
-votes_list = []
-for i in range(len(vote_data)):
-    vote = str(i)
-    ind_vote = vote_data[vote]['Votes']
-    vote_l= list(ind_vote.values())
-    votes_list.append(vote_l)
-print(votes_list)
-
-
-def string_list(x):
-    """
-    x: -> a list
-    return: the same list, but the values will be a string
-    """
-    str_lst = list(map(str, x))
-    return str_lst
-
-dummy_vote = []
-for i in range(len(vote_data)):
-    lst_str = string_list(votes_list[i])
-    dummy_vote.append(lst_str)
-
-print(dummy_vote)
-
 # RSA implementations
 
 #  TODO: FIND A BETTER WAY TO GENERATE KEYS
@@ -97,59 +69,55 @@ for i in range(len(vote_data)):
 
 server_keys = generate_rsa_keys(1024,'server_private.pem','server_public.pem')
 
-def vote_encrypt(vote_list,user):
+
+def rsa_encryption(data, type):
     """
-    Encrypts using the Public Key
-    vote_list: a list of the votes to be encrypted
-    user: UserID from the JSON in order to use their key to encrypt
-    :return: sec_vote -> Encrypted RSA
+    data -> data that needs to be encrypted
+    type -> str: user or server
     """
-    user_public_key = RSA.importKey(open(public_list[user]).read())
+    if type == 'server':
+        encoded_data = data.encode()
+        # hex_data = binascii.hexlify(encoded_data)
+        server_public_key = RSA.importKey(open("server_public.pem").read())
+        cipher = PKCS1_OAEP.new(server_public_key)
+        secure = cipher.encrypt(encoded_data)
+        return secure
+    elif type == 'user':
+        encoded_data = data.encode()
+        hex_data = binascii.hexlify(encoded_data)
+        user_public_key = RSA.importKey(open("user_public.pem").read())
+        cipher = PKCS1_OAEP.new(user_public_key)
+        secure = cipher.encrypt(hex_data)
+        return secure
+    else:
+        return "Invalid Type"
 
-    encoded_value = []
-    for i in range(len(vote_list)):
-        d = vote_list[i].encode()
-        rook = binascii.hexlify(d)
-        encoded_value.append(rook)
 
-
-    encrypted_vote = []
-    for i in range(len(vote_list)):
-        vote_ciper = PKCS1_OAEP.new(user_public_key)
-        sec_vote = vote_ciper.encrypt(encoded_value[i])
-        encrypted_vote.append(sec_vote)
-
-    return encrypted_vote
-
-test_encrypt = vote_encrypt(dummy_vote[0],0)
-print(test_encrypt)
-
-def vote_decrypt(encrypted_list, user):
+def rsa_decryption(data, type):
     """
-    :param encrypted_list: list containing the encrypted elements
-    :param user: the UserID from the JSON
-    :return: final_decrypt -> decrypted output
+    data -> data that needs to be decrypted
+    type -> str: user or server
     """
-    user_private_key = RSA.importKey(open(private_list[user]).read())
+    if type == 'server':
+        server_private_key = RSA.importKey(open("server_private.pem").read())
+        plain = PKCS1_OAEP.new(server_private_key)
+        decrypt = plain.decrypt(data)
+        un_hex = binascii.unhexlify(decrypt)
+        un_dec = un_hex.decode()
 
-    decrypted_vote = []
-    for i in range(len(encrypted_list)):
-        vote_plaintext = PKCS1_OAEP.new(user_private_key)
-        decrypt_vote = vote_plaintext.decrypt(encrypted_list[i])
-        decrypted_vote.append(decrypt_vote)
+        return un_dec
 
-    decode_vote = []
-    for i in range(len(encrypted_list)):
-        bishop = binascii.unhexlify(decrypted_vote[i])
-        d = bishop.decode()
-        decode_vote.append(d)
+    elif type == 'user':
+        user_private_key = RSA.importKey(open("user_private.pem").read())
+        plaintext = PKCS1_OAEP.new(user_private_key)
+        decrypt = plaintext.decrypt(data)
+        un_hex = binascii.unhexlify(decrypt)
+        un_dec = un_hex.decode()
 
+        return un_dec
 
-    final_decrypt = list(map(int, decode_vote))
-    return final_decrypt
-
-test_decrypt = vote_decrypt(test_encrypt,0)
-print(test_decrypt)
+    else:
+        return "Invalid Type"
 
 
 # # Encrypt using AES
@@ -170,14 +138,14 @@ print(test_decrypt)
 
 
 ## signature
-# h = SHA256.new(vote_sec)
-# signature = pss.new(user_private_key).sign(h)
-#
-# verifier = pss.new(user_public_key)
-# try:
-#     verifier.verify(h,signature)
-#     print("Signature is Authentic")
-# except (ValueError,TypeError):
-#     print("The signature is not authentic")
+h = SHA256.new(vote_sec)
+signature = pss.new(user_private_key).sign(h)
+
+verifier = pss.new(user_public_key)
+try:
+    verifier.verify(h,signature)
+    print("Signature is Authentic")
+except (ValueError,TypeError):
+    print("The signature is not authentic")
 
 
