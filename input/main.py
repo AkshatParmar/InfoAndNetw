@@ -243,7 +243,7 @@ if __name__ == "__main__":
                 """)
             while True:
                 state_senator_choice = input("Choice: ")
-                if president_choice in '1 2 3 4 5 6 7':
+                if state_senator_choice in '1 2 3 4 5 6 7':
                     break
                 print("Invalid choice, try again")
             dob = None
