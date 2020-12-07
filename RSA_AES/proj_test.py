@@ -135,17 +135,34 @@ def rsa_decryption(data, type):
 # Candidate name - here so i can just copy paste to console : Marcus Maragh
 
 
+def signature(sig,private_key):
+    """
+    Function that creates an e-signature using SHA256 and private keys
+    sig -> data that will be used as the signature
+    user -> the user, in order to use their private key
+    returns a list with the signature, and hash-value
+    """
+    sig = sig.encode()
+    user_private_key = RSA.importKey(open(private_key).read())
+    hash_value = SHA256.new(sig)
+    e_signature = pss.new(user_private_key).sign(hash_value)
+    return [e_signature, hash_value]
 
-
-## signature
-h = SHA256.new(vote_sec)
-signature = pss.new(user_private_key).sign(h)
-
-verifier = pss.new(user_public_key)
-try:
-    verifier.verify(h,signature)
-    print("Signature is Authentic")
-except (ValueError,TypeError):
-    print("The signature is not authentic")
+def sig_verifier(sig, public_key,hash_value):
+    """
+    Function that verifies the e-signature using SHA256 and public keys
+    sig -> te signature that needs to be verified
+    public_key -> the users public key
+    hash_value -> the hash value that is return from the signature
+    returns: True if it passes verification
+             False if it doesnt pass verification
+    """
+    user_public_key = RSA.importKey(open(public_key).read())
+    verifier = pss.new(user_public_key)
+    try:
+        verifier.verify(hash_value,sig)
+        return True
+    except:
+        return False
 
 
