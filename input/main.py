@@ -1,4 +1,5 @@
 from data_access import *
+from Encryption import *
 import os
 import binascii
 import requests
@@ -68,7 +69,13 @@ def register_user(jda, username, password, name, dob, ssn):
     }
     # DOB/SSN/Password all need to be encrypted somehow 
     # Password can be simple encryption
-    # DOB and SSN should be public/private key RSA 
+
+    #Generate RSA Keys when user is registered
+    private_file = username + '_private_key.pem'
+    public_file = username + '_public_key.pem'
+    generate_rsa_keys(1024,private_file,public_file)
+
+    # DOB and SSN should be public/private key RSA
     return jda.insert(user, username)
         
 def login(jda, username, password):
@@ -98,23 +105,33 @@ def logout(session_id):
 
 def submit_vote(session_id, ssn, dob, votes):
     # Create e signature with ssn and dob
-    e_signature = ssn+dob 
-    
+    with open("sessions.json") as file:
+        identify = json.load(file)
+    user_name = identify[session_id]["username"]
+    private_key = user_name + '_private_key.pem'
+    e_signature = ssn + dob
+    e_signature = signature(e_signature, private_key)
+
+
     payload = {
         "SessionID": session_id,
         "Votes": votes
     }
 
-    # RSA encrypt the payload 
-    encrypted_payload = str(payload)
+    # RSA encrypt the payload
+    payload = str(payload)
+    encrypted_payload = rsa_encryption(payload,'server')
     # send payload to server (probably can just use basic flask request for this)
-    print(encrypted_payload + e_signature) #debug line -- can be removed once everything is added in
-    
+    #print(encrypted_payload, '\n', e_signature) #debug line -- can be removed once everything is added in
+
+    # Encrypted Payload as Key, e-signature as the value
     request_body = {
         "payload": encrypted_payload,
         "e_sig": e_signature
     }
 
+    request_body = str(request_body)
+    print(request_body)
     r = requests.post("http://localhost:5000/vote", json=request_body)
 
     print(r.text)

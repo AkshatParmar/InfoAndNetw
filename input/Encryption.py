@@ -99,7 +99,7 @@ def signature(sig,private_key):
     user_private_key = RSA.importKey(open(private_key).read())
     hash_value = SHA256.new(sig)
     e_signature = pss.new(user_private_key).sign(hash_value)
-    return [e_signature, hash_value]
+    return e_signature
 
 def sig_verifier(sig, public_key,hash_value):
     """

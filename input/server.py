@@ -1,8 +1,9 @@
 from flask import Flask, request, jsonify
+import ast
 from Encryption import *
 
 # Generate the Server RSA Keys
-server_keys = generate_rsa_keys(2028,'server_private.pem','server_public.pem')
+server_keys = generate_rsa_keys(2048,'server_private.pem','server_public.pem')
 
 # Generate the IV for AES and respective key
 iv_key()
@@ -16,8 +17,15 @@ app = Flask(__name__)
 @app.route('/vote', methods = ['POST'])
 def receive_vote():
     data = request.get_json(force=True)
+
+    data = ast.literal_eval(data)
     payload = data["payload"]
-    e_sig = data["e_sig"]
+
+    print(payload)
+    vote_dict = rsa_decryption(payload, 'server')
+    
+
+
 
     # needs to decrypt payload and e_sig
 
@@ -35,3 +43,7 @@ def receive_vote():
         return "User has either already voted or is unable to vote.", 402
     # otherwise return 200 status code and a success message
     return "Vote has been placed, thank you.", 200
+
+if __name__ == "__main__":
+    app.debug = True
+    app.run()
