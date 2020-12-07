@@ -1,6 +1,17 @@
 from flask import Flask, request, jsonify
+from Encryption import *
+
+# Generate the Server RSA Keys
+server_keys = generate_rsa_keys(2028,'server_private.pem','server_public.pem')
+
+# Generate the IV for AES and respective key
+iv_key()
+aes_key_iv = read_iv_key()
+aes_key = aes_key_iv[:32]
+aes_iv = aes_key_iv[32:]
 
 app = Flask(__name__)
+
 
 @app.route('/vote', methods = ['POST'])
 def receive_vote():
@@ -9,6 +20,7 @@ def receive_vote():
     e_sig = data["e_sig"]
 
     # needs to decrypt payload and e_sig
+
 
     # check that session id's user matches up with SSN and DOB in e-sig
     incorrect_e_sig = False
