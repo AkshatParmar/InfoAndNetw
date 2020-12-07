@@ -73,8 +73,9 @@ def rsa_decryption(data, type, user=''):
         decrypt = plain.decrypt(data)
         un_hex = binascii.unhexlify(decrypt)
         un_dec = un_hex.decode()
+        data = ast.literal_eval(un_dec)
 
-        return un_dec
+        return data
 
     elif type == 'user':
         user_private_key = RSA.importKey(open("user_private.pem").read())
@@ -82,8 +83,9 @@ def rsa_decryption(data, type, user=''):
         decrypt = plaintext.decrypt(data)
         un_hex = binascii.unhexlify(decrypt)
         un_dec = un_hex.decode()
+        data = ast.literal_eval(un_dec)
 
-        return un_dec
+        return data
 
     else:
         return "Invalid Type"

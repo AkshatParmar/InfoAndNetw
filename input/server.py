@@ -23,7 +23,8 @@ def receive_vote():
 
     print(payload)
     vote_dict = rsa_decryption(payload, 'server')
-    
+    print(vote_dict['Votes'])
+
 
 
 
