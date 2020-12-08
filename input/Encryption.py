@@ -31,13 +31,22 @@ def iv_key():
     aes_key = binascii.hexlify(os.urandom(16))
     with open("aes_key.key",'wb') as file:
         file.write(aes_key)
+    with open("aes_iv.key","wb") as file:    
         file.write(iv)
-    print("AES Key Created")
+    print("AES Key,IV Created")
+    file.close()
 
-def read_iv_key():
+def read_iv_key(inp):
     with open("aes_key.key",'rb') as file:
         aes_key = file.read()
-    return(aes_key)
+    with open("aes_iv.key",'rb') as file:
+        iv = file.read()    
+    if inp == "key":
+        return aes_key
+    elif inp == "iv":
+        return iv
+    else:
+        return None
 
 def rsa_encryption(data, type, user = ''):
     """
@@ -119,3 +128,34 @@ def sig_verifier(sig, public_key,hash_value):
         return True
     except:
         return False
+
+# Encrypt using AES
+iv_key()
+def aes_encrypt(data,type):
+    """
+    data -> data to be encrypted
+    type -> "server" module only, no public/priv
+             keys for AES encryption
+    """
+    if type.lower() == "server":
+        main_key = AES.new(read_iv_key("key"), AES.MODE_CBC, read_iv_key('iv')) # CBC Mode AES - for encryption
+        sec_vote = data
+        aes_cipher = main_key
+        ciphered_data = aes_cipher.encrypt(pad(sec_vote, AES.block_size))
+        return ciphered_data
+    else:
+        return "Invalid Type"
+
+# Decrypt AES
+def aes_decrypt(ciphered_data,type):
+    """
+    data -> data to be decrypted
+    type -> "server" by default
+    """
+    if type.lower() == "server":
+        main_key = AES.new(read_iv_key("key"), AES.MODE_CBC, read_iv_key('iv')) # CBC Mode AES - for encryption
+        aes_plain = main_key
+        original_sec_vote = unpad(aes_plain.decrypt(ciphered_data), AES.block_size)
+        return original_sec_vote
+    else:
+        return "Invalid Type"
