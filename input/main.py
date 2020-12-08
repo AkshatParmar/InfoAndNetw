@@ -61,21 +61,34 @@ def dob_check(dob):
     return True
 
 def register_user(jda, username, password, name, dob, ssn):
+
+    sec_pass = password.encode()
+    sec_pass = binascii.hexlify(sec_pass)
+    sec_pass = sec_pass.decode()
+
     user = {
-        "Password": password,
+        "Password": sec_pass,
         "Name": name,
         "DOB": dob,
         "SSN": ssn
     }
     # DOB/SSN/Password all need to be encrypted somehow 
-    # Password can be simple encryption
 
-    #Generate RSA Keys when user is registered
-    private_file = username + '_private_key.pem'
-    public_file = username + '_public_key.pem'
-    generate_rsa_keys(1024,private_file,public_file)
+    # Password Encryption in Client Using Users Private/Public Key
 
-    # DOB and SSN should be public/private key RSA
+
+    # Encrypt DOB and SSB
+    encrypt_ssn = rsa_encryption(ssn,'server')
+    encrypt_dob = rsa_encryption(dob,'server')
+
+    # Encrypted Payload as Key, e-signature as the value
+    dob_ssn_payload = {
+        username: {"SSN": encrypt_ssn , "DOB": encrypt_dob}
+    }
+
+    # Verifier Payload to be sent to server
+    verifier_payload = str(dob_ssn_payload)
+
     return jda.insert(user, username)
         
 def login(jda, username, password):
@@ -86,6 +99,9 @@ def login(jda, username, password):
 
     # decrypt password
     decrypted_password = user_info["Password"]
+    decrypted_password = decrypted_password.encode()
+    decrypted_password = binascii.unhexlify(decrypted_password)
+    decrypted_password = decrypted_password.decode()
 
     if decrypted_password == password:
         #randomly generate a session_id and store that combo with the username somewhere
@@ -131,7 +147,7 @@ def submit_vote(session_id, ssn, dob, votes):
     }
 
     request_body = str(request_body)
-    print(request_body)
+    #print(request_body) # Mainly used as a debugging tool
     r = requests.post("http://localhost:5000/vote", json=request_body)
 
     print(r.text)

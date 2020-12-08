@@ -2,8 +2,9 @@ from flask import Flask, request, jsonify
 import ast
 from Encryption import *
 
+
 # Generate the Server RSA Keys
-server_keys = generate_rsa_keys(2048,'server_private.pem','server_public.pem')
+generate_rsa_keys(2048,'server_private.pem','server_public.pem')
 
 # Generate the IV for AES and respective key
 iv_key()
@@ -23,7 +24,8 @@ def receive_vote():
 
     print(payload)
     vote_dict = rsa_decryption(payload, 'server')
-    print(vote_dict['Votes'])
+    vote_dict = ast.literal_eval(vote_dict)
+
 
 
 

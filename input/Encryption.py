@@ -52,10 +52,11 @@ def rsa_encryption(data, type, user = ''):
         cipher = PKCS1_OAEP.new(server_public_key)
         secure = cipher.encrypt(hex_data)
         return secure
-    elif type == 'user':
+    elif type == 'user': # if this is used, needs specific user as well
+        key_name = user + '_public_key.pem'
         encoded_data = data.encode()
         hex_data = binascii.hexlify(encoded_data)
-        user_public_key = RSA.importKey(open("user_public.pem").read())
+        user_public_key = RSA.importKey(open(key_name).read())
         cipher = PKCS1_OAEP.new(user_public_key)
         secure = cipher.encrypt(hex_data)
         return secure
@@ -73,19 +74,18 @@ def rsa_decryption(data, type, user=''):
         decrypt = plain.decrypt(data)
         un_hex = binascii.unhexlify(decrypt)
         un_dec = un_hex.decode()
-        data = ast.literal_eval(un_dec)
 
-        return data
+        return un_dec
 
-    elif type == 'user':
-        user_private_key = RSA.importKey(open("user_private.pem").read())
+    elif type == 'user': # if this is used, needs specific user as well
+        key_name = user + '_private_key.nem'
+        user_private_key = RSA.importKey(open(key_name).read())
         plaintext = PKCS1_OAEP.new(user_private_key)
         decrypt = plaintext.decrypt(data)
         un_hex = binascii.unhexlify(decrypt)
         un_dec = un_hex.decode()
-        data = ast.literal_eval(un_dec)
 
-        return data
+        return un_dec
 
     else:
         return "Invalid Type"
