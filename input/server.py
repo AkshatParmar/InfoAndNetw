@@ -7,10 +7,10 @@ from data_access import *
 generate_rsa_keys(2048,'server_private.pem','server_public.pem')
 
 # Generate the IV for AES and respective key
-iv_key()
-aes_key_iv = read_iv_key()
-aes_key = aes_key_iv[:32]
-aes_iv = aes_key_iv[32:]
+# iv_key()
+# # aes_key_iv = read_iv_key()
+# # aes_key = aes_key_iv[:32]
+# # aes_iv = aes_key_iv[32:]
 
 app = Flask(__name__)
 
@@ -39,7 +39,7 @@ def receive_register(voteJSON, e_sig):
 
     # Whitelist check
     whitelist_jda = JsonDataAccess("whitelist.json")
-    whitelist_jda.insert(True, username) # SETUP: keep for population, comment out later
+    whitelist_jda.insert(True, username) # SETUP: keep for setup, comment out for demo
 
     if whitelist_jda.search(username) is None: # User can't vote
         return -2
@@ -82,7 +82,7 @@ def receive_register(voteJSON, e_sig):
     votes_jda.update(senator_arr, "NJ State Senator")
 
     # Remove username from whitelist (voted)
-    whitelist_jda.delete(username) # SETUP: comment out to populate whitelist
+    whitelist_jda.delete(username) # SETUP: comment for setup, keep for demo
 
 def vote_tally():
     votes_jda = JsonDataAccess("votes.json")
