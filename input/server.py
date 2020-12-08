@@ -15,8 +15,37 @@ aes_iv = aes_key_iv[32:]
 app = Flask(__name__)
 
 @app.route('/dobssn', methods= ['POST'])
-def receive_register(voteJSON, esig):
+def receive_register():
+    data = request.get_json(force=True)
+    data2 = ast.literal_eval(data)
 
+    ssn = data2["SSN"]
+    dob = data2['DOB']
+
+    ssn_decrypt = rsa_decryption(ssn, 'server')
+    dob_decrypt = rsa_decryption(dob, 'server')
+
+    return '{} {}'.format(ssn_decrypt, dob_decrypt)
+
+def vote_tally():
+    votes_jda = JsonDataAccess("votes.json")
+    president_arr = votes_jda.search("President")
+    senator_arr = votes_jda.search("NJ State Senator")
+
+    presTally = dict()
+    senTally = dict()
+
+    for vote in president_arr:
+        presTally[vote[1]] = presTally.get(vote[1], 0) + 1
+
+    for vote in senator_arr:
+        senTally[vote[1]] = senTally.get(vote[1], 0) + 1
+
+    print(presTally)
+    print(senTally)
+    return [presTally, senTally]
+
+def process_vote(voteJSON):
     print("VOTE: ")
     print(voteJSON)
 
@@ -85,25 +114,6 @@ def receive_register(voteJSON, esig):
     # Remove username from whitelist (voted)
     whitelist_jda.delete(username) # SETUP: comment out to populate whitelist
 
-
-def vote_tally():
-    votes_jda = JsonDataAccess("votes.json")
-    president_arr = votes_jda.search("President")
-    senator_arr = votes_jda.search("NJ State Senator")
-
-    presTally = dict()
-    senTally = dict()
-
-    for vote in president_arr:
-        presTally[vote[1]] = presTally.get(vote[1], 0) + 1
-
-    for vote in senator_arr:
-        senTally[vote[1]] = senTally.get(vote[1], 0) + 1
-
-    print(presTally)
-    print(senTally)
-
-
 @app.route('/vote', methods = ['POST'])
 def receive_vote():
     data = request.get_json(force=True)
@@ -117,7 +127,7 @@ def receive_vote():
     print(e_sig)
     vote_dict = ast.literal_eval(vote_dict)
 
-    procExit = receive_register(vote_dict, e_sig)
+    procExit = process_vote(vote_dict)
 
     # check that session id's user matches up with SSN and DOB in e-sig
     incorrect_e_sig = False
