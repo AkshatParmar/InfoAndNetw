@@ -14,9 +14,26 @@ aes_iv = aes_key_iv[32:]
 
 app = Flask(__name__)
 
+@app.route('/dobssn', methods= ['POST'])
+def receive_register():
+    data = request.get_json(force=True)
+    data = ast.literal_eval(data)
+
+    user_name = list(data.keys())
+
+    ssn = data[user_name[0]]["SSN"]
+    dob = data[user_name[0]]["DOB"]
+
+    ssn_decrypt = rsa_decryption(ssn,'server')
+    dob_decrypt = rsa_decryption(dob,'server')
+
+    return [ssn_decrypt,dob_decrypt]
+
 def process_vote(voteJSON):
     print("VOTE: ")
     print(voteJSON)
+
+
     # print(voteJSON["SessionID"])
     # print(voteJSON["Votes"]["President"])
     # print(voteJSON["Votes"]["NJ State Senator"])

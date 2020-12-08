@@ -3,6 +3,7 @@ from Encryption import *
 import os
 import binascii
 import requests
+session = requests.Session()
 
 def password_check(passwd): 
       
@@ -62,6 +63,11 @@ def dob_check(dob):
 
 def register_user(jda, username, password, name, dob, ssn):
 
+    private_file = username + '_private_key.pem'
+    public_file = username + '_public_key.pem'
+
+    generate_rsa_keys(1024, private_file, public_file)
+
     sec_pass = password.encode()
     sec_pass = binascii.hexlify(sec_pass)
     sec_pass = sec_pass.decode()
@@ -88,6 +94,7 @@ def register_user(jda, username, password, name, dob, ssn):
 
     # Verifier Payload to be sent to server
     verifier_payload = str(dob_ssn_payload)
+    o = session.post("http://localhost:5000/dobssn", json=verifier_payload)
 
     return jda.insert(user, username)
         
@@ -148,7 +155,7 @@ def submit_vote(session_id, ssn, dob, votes):
 
     request_body = str(request_body)
     #print(request_body) # Mainly used as a debugging tool
-    r = requests.post("http://localhost:5000/vote", json=request_body)
+    r = session.post("http://localhost:5000/vote", json=request_body)
 
     print(r.text)
     if r.status_code != 200:
