@@ -35,7 +35,7 @@ def receive_register(voteJSON, esig):
     users_jda = JsonDataAccess("users.json")
     userInfo = users_jda.search(username)
     
-    if (userInfo["DOB"] != esig[1] or userInfo["SSN"] != esig[0]) # SSN/DOB don't match
+    if (userInfo["DOB"] != esig[1] or userInfo["SSN"] != esig[0]): # SSN/DOB don't match
         return -1
 
     # Whitelist check
