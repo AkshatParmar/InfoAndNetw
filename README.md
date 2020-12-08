@@ -16,11 +16,10 @@ Separate terminal window:
 export FLASK_APP=server.py
 flask run
 ```
-4) In order to add clients to the whitelist:
+4) In order to add clients to the whitelist run the following and follow prompts:
 ```
 python whitelist.py
 ```
-And follow prompts
 5) Now you can operate the client as you'd like
 6) In order to see the analysis, run:
 ```
