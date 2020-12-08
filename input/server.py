@@ -15,37 +15,7 @@ aes_iv = aes_key_iv[32:]
 app = Flask(__name__)
 
 @app.route('/dobssn', methods= ['POST'])
-def receive_register():
-    data = request.get_json(force=True)
-    data2 = ast.literal_eval(data)
-
-    ssn = data2["SSN"]
-    dob = data2['DOB']
-
-    ssn_decrypt = rsa_decryption(ssn, 'server')
-    dob_decrypt = rsa_decryption(dob, 'server')
-
-    return '{} {}'.format(ssn_decrypt, dob_decrypt)
-
-def vote_tally():
-    votes_jda = JsonDataAccess("votes.json")
-    president_arr = votes_jda.search("President")
-    senator_arr = votes_jda.search("NJ State Senator")
-
-    presTally = dict()
-    senTally = dict()
-
-    for vote in president_arr:
-        presTally[vote[1]] = presTally.get(vote[1], 0) + 1
-
-    for vote in senator_arr:
-        senTally[vote[1]] = senTally.get(vote[1], 0) + 1
-
-    print(presTally)
-    print(senTally)
-    return [presTally, senTally]
-
-def process_vote(voteJSON):
+def receive_register(voteJSON, e_sig):
     print("VOTE: ")
     print(voteJSON)
 
@@ -64,7 +34,7 @@ def process_vote(voteJSON):
     users_jda = JsonDataAccess("users.json")
     userInfo = users_jda.search(username)
     
-    if (userInfo["DOB"] != esig[1] or userInfo["SSN"] != esig[0]): # SSN/DOB don't match
+    if (userInfo["DOB"] != e_sig[1] or userInfo["SSN"] != e_sig[0]): # SSN/DOB don't match
         return -1
 
     # Whitelist check
@@ -114,6 +84,24 @@ def process_vote(voteJSON):
     # Remove username from whitelist (voted)
     whitelist_jda.delete(username) # SETUP: comment out to populate whitelist
 
+def vote_tally():
+    votes_jda = JsonDataAccess("votes.json")
+    president_arr = votes_jda.search("President")
+    senator_arr = votes_jda.search("NJ State Senator")
+
+    presTally = dict()
+    senTally = dict()
+
+    for vote in president_arr:
+        presTally[vote[1]] = presTally.get(vote[1], 0) + 1
+
+    for vote in senator_arr:
+        senTally[vote[1]] = senTally.get(vote[1], 0) + 1
+
+    print(presTally)
+    print(senTally)
+    return [presTally, senTally]
+
 @app.route('/vote', methods = ['POST'])
 def receive_vote():
     data = request.get_json(force=True)
@@ -124,10 +112,10 @@ def receive_vote():
     vote_dict = rsa_decryption(payload, 'server')
     e_sig = rsa_decryption(e_sig,'server')
     e_sig = e_sig.split("_")
-    print(e_sig)
+    # print(e_sig)
     vote_dict = ast.literal_eval(vote_dict)
 
-    procExit = process_vote(vote_dict)
+    procExit = receive_register(vote_dict, e_sig)
 
     # check that session id's user matches up with SSN and DOB in e-sig
     incorrect_e_sig = False
