@@ -39,7 +39,6 @@ def receive_register(voteJSON, e_sig):
 
     # Whitelist check
     whitelist_jda = JsonDataAccess("whitelist.json")
-    #whitelist_jda.insert(True, username) # SETUP: keep for setup, comment out for demo
 
     if whitelist_jda.search(username) is None: # User can't vote
         return -2
@@ -82,7 +81,7 @@ def receive_register(voteJSON, e_sig):
     votes_jda.update(senator_arr, "NJ State Senator")
 
     # Remove username from whitelist (voted)
-    whitelist_jda.delete(username) # SETUP: comment for setup, keep for demo
+    whitelist_jda.delete(username) 
 
 def vote_tally():
     votes_jda = JsonDataAccess("votes.json")
