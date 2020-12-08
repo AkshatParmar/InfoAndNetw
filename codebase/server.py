@@ -14,8 +14,7 @@ generate_rsa_keys(2048,'server_private.pem','server_public.pem')
 
 app = Flask(__name__)
 
-@app.route('/dobssn', methods= ['POST'])
-def receive_register(voteJSON, e_sig):
+def verify_vote(voteJSON, e_sig):
     print("VOTE: ")
     print(voteJSON)
 
@@ -87,6 +86,10 @@ def vote_tally():
     votes_jda = JsonDataAccess("votes.json")
     president_arr = votes_jda.search("President")
     senator_arr = votes_jda.search("NJ State Senator")
+    if president_arr is None:
+        print(0)
+        print(0)
+        return [0,0]
 
     presTally = dict()
     senTally = dict()
@@ -121,7 +124,7 @@ def receive_vote():
 
     vote_dict = ast.literal_eval(vote_dict)
 
-    procExit = receive_register(vote_dict, e_sig)
+    procExit = verify_vote(vote_dict, e_sig)
 
     # check that session id's user matches up with SSN and DOB in e-sig
     incorrect_e_sig = False

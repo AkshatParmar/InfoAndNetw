@@ -82,19 +82,11 @@ def register_user(jda, username, password, name, dob, ssn):
 
     # Password Encryption in Client Using Users Private/Public Key
 
-
-    # Encrypt DOB and SSB
+    """
+    Encrypt DOB and SSB
     encrypt_ssn = rsa_encryption(ssn,'server')
     encrypt_dob = rsa_encryption(dob,'server')
-
-    # Encrypted Payload as Key, e-signature as the value
-    dob_ssn_payload = {
-        "SSN": encrypt_ssn , "DOB": encrypt_dob
-    }
-
-    # Verifier Payload to be sent to server
-    verifier_payload = str(dob_ssn_payload)
-    o = session.post("http://localhost:5000/dobssn", json=verifier_payload)
+    """
 
     return jda.insert(user, username)
         
@@ -215,7 +207,6 @@ if __name__ == "__main__":
             
             if register_user(users_jda, username, password, name, dob, ssn):
                 print("Account successfully created")
-                break
         elif int(action) == 2:
             attempts = 0
             while attempts < 3: 
