@@ -124,7 +124,39 @@ def rsa_decryption(data, type):
 # aes_cipher = AES.new(aes_key, AES.MODE_CBC, aes_iv) # CBC Mode AES - for encryption
 # ciphered_data = aes_cipher.encrypt(pad(sec_vote, AES.block_size))
 # print(ciphered_data)
-#
+def aes_cbc_encryption(data, type, user=''):
+    if type == 'server':
+        iv_key()
+        encoded_data = data.encode()
+        server_aes_key = read_iv_key("key")
+        server_iv = read_iv_key("iv")
+        cipher = AES.new(server_aes_key, AES.MODE_CBC, server_iv)
+        pad = len(encoded_data)%16 * -1
+        encoded_data_trim = encoded_data[64:pad]
+        secure = cipher.encrypt(encoded_data_trim)
+        secure = encoded_data[0:64] + secure + encoded_data[pad:]
+        return secure
+    # elif type == 'user':
+    #     AES.imp
+    else:
+        return "Invalid Type"
+
+def aes_cbc_decryption(data, type, user=''):
+    if type == "server":
+        server_aes_key = read_iv_key("key")
+        server_iv = read_iv_key("iv")
+        cipher = AES.new(server_aes_key, AES.MODE_CBC, server_iv)
+        pad = len(encoded_data)%8 * -1
+        secured_data = aes_cbc_encryption(data, type,"")
+        secured_data_trim = secured_data[32:pad]
+        plaintext = cipher.decrypt(secured_data_trim)
+        plaintext = secured_data[0:32] + plaintext + secured_data[pad:]
+        return plaintext
+    else:
+        return "Invalid Type" 
+
+        
+
 # #Decrypt AES
 # aes_plain = AES.new(aes_key, AES.MODE_CBC, aes_iv) # CBC Mode AES - for decryption
 # original_sec_vote = unpad(aes_plain.decrypt(ciphered_data), AES.block_size)
