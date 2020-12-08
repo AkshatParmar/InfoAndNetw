@@ -19,11 +19,11 @@ def receive_register(voteJSON, e_sig):
     print("VOTE: ")
     print(voteJSON)
 
-    # Check session eligibility: check that session id's 
+    # Check session eligibility: check that session id's
         # user matches up with SSN and DOB in e-sig
     sessions_jda = JsonDataAccess("sessions.json")
     userPair = sessions_jda.search(voteJSON["SessionID"])
-    
+
     if userPair is None:
         return -1
 
@@ -33,7 +33,7 @@ def receive_register(voteJSON, e_sig):
         # we match their SSN & DOB
     users_jda = JsonDataAccess("users.json")
     userInfo = users_jda.search(username)
-    
+
     if (userInfo["DOB"] != e_sig[1] or userInfo["SSN"] != e_sig[0]): # SSN/DOB don't match
         return -1
 
@@ -43,12 +43,12 @@ def receive_register(voteJSON, e_sig):
 
     if whitelist_jda.search(username) is None: # User can't vote
         return -2
-    
+
     # Vote Input ==> votes.json
     votes_jda = JsonDataAccess("votes.json")
     president_arr = votes_jda.search("President")
     senator_arr = votes_jda.search("NJ State Senator")
-    
+
     # (One-time) votes.json setup
     if (president_arr is None):
         votes_jda.insert([], "President")
@@ -58,11 +58,11 @@ def receive_register(voteJSON, e_sig):
 
     presChoice = voteJSON["Votes"]["President"]
     senChoice = voteJSON["Votes"]["NJ State Senator"]
-    
+
     if presChoice == "1":
         president_arr.append((username,"Donald Trump"))
     else: # presChoice == "2":
-        president_arr.append((username, "Joe Biden"))   
+        president_arr.append((username, "Joe Biden"))
     votes_jda.update(president_arr, "President")
 
     if senChoice == "1":
@@ -107,12 +107,19 @@ def receive_vote():
     data = request.get_json(force=True)
     data = ast.literal_eval(data)
 
-    payload = data["payload"]
-    e_sig = data['e_sig']
+    # AES Decryption
+    aes_payload = data["payload"]
+    decrypt_aes = aes_decrypt(aes_payload,'server')
+
+    decrypted_aes = ast.literal_eval(decrypt_aes)
+
+    # RSA Decryption
+    payload = decrypted_aes['payload']
     vote_dict = rsa_decryption(payload, 'server')
-    e_sig = rsa_decryption(e_sig,'server')
+    e_sig = decrypted_aes['e_sig']
+    e_sig = rsa_decryption(e_sig, 'server')
     e_sig = e_sig.split("_")
-    # print(e_sig)
+
     vote_dict = ast.literal_eval(vote_dict)
 
     procExit = receive_register(vote_dict, e_sig)

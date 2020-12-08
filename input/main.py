@@ -152,10 +152,15 @@ def submit_vote(session_id, ssn, dob, votes):
         "payload": encrypted_payload,
         "e_sig": e_signature
     }
-
     request_body = str(request_body)
+    aes_encryption = aes_encrypt(request_body,'server')
+    request_body2 = {
+        "payload" : aes_encryption
+    }
+
+    request_body2 = str(request_body2) # RSA encrypted
     #print(request_body) # Mainly used as a debugging tool
-    r = session.post("http://localhost:5000/vote", json=request_body)
+    r = session.post("http://localhost:5000/vote", json=request_body2)
 
     print(r.text)
     if r.status_code != 200:

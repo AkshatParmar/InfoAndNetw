@@ -139,7 +139,7 @@ def aes_encrypt(data,type):
     """
     if type.lower() == "server":
         main_key = AES.new(read_iv_key("key"), AES.MODE_CBC, read_iv_key('iv')) # CBC Mode AES - for encryption
-        sec_vote = data
+        sec_vote = data.encode()
         aes_cipher = main_key
         ciphered_data = aes_cipher.encrypt(pad(sec_vote, AES.block_size))
         return ciphered_data
@@ -156,6 +156,7 @@ def aes_decrypt(ciphered_data,type):
         main_key = AES.new(read_iv_key("key"), AES.MODE_CBC, read_iv_key('iv')) # CBC Mode AES - for encryption
         aes_plain = main_key
         original_sec_vote = unpad(aes_plain.decrypt(ciphered_data), AES.block_size)
+        original_sec_vote = original_sec_vote.decode()
         return original_sec_vote
     else:
         return "Invalid Type"
