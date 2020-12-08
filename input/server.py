@@ -43,6 +43,7 @@ def vote_tally():
 
     print(presTally)
     print(senTally)
+    return [presTally, senTally]
 
 def process_vote(voteJSON):
     print("VOTE: ")
