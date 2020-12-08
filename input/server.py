@@ -27,16 +27,28 @@ def receive_register():
     ssn_decrypt = rsa_decryption(ssn,'server')
     dob_decrypt = rsa_decryption(dob,'server')
 
-    return [ssn_decrypt,dob_decrypt]
+    return (ssn_decrypt,dob_decrypt)
+
+def vote_tally():
+    votes_jda = JsonDataAccess("votes.json")
+    president_arr = votes_jda.search("President")
+    senator_arr = votes_jda.search("NJ State Senator")
+
+    presTally = dict()
+    senTally = dict()
+
+    for vote in president_arr:
+        presTally[vote[1]] = presTally.get(vote[1], 0) + 1
+
+    for vote in senator_arr:
+        senTally[vote[1]] = senTally.get(vote[1], 0) + 1
+
+    print(presTally)
+    print(senTally)
 
 def process_vote(voteJSON):
     print("VOTE: ")
     print(voteJSON)
-
-
-    # print(voteJSON["SessionID"])
-    # print(voteJSON["Votes"]["President"])
-    # print(voteJSON["Votes"]["NJ State Senator"])
 
     # Check session eligibility: check that session id's 
         # user matches up with SSN and DOB in e-sig
@@ -52,10 +64,21 @@ def process_vote(voteJSON):
         # we match their SSN & DOB
     users_jda = JsonDataAccess("users.json")
     userInfo = users_jda.search(username)
-    # print("USER INFO FROM USERS.JSON: ")
-    # print(userInfo)
+    print("USER INFO FROM USERS.JSON: ")
+    print(userInfo["DOB"])
+    print(userInfo["SSN"])
 
     # TODO: get user info from VOTE (data) input, match
+    # voterlist = receive_register()
+    # print("VOTER LIST:")
+    # print(voterlist)
+
+    # Whitelist check
+    whitelist_jda = JsonDataAccess("whitelist.json")
+    whitelist_jda.insert(True, username) # SETUP: keep for population, comment out later
+
+    if whitelist_jda.search(username) is None: # User can't vote
+        return -2
     
     # Vote Input ==> votes.json
     votes_jda = JsonDataAccess("votes.json")
@@ -94,6 +117,9 @@ def process_vote(voteJSON):
         senator_arr.append((username, "Hirsh Singh"))
     votes_jda.update(senator_arr, "NJ State Senator")
 
+    # Remove username from whitelist (voted)
+    whitelist_jda.delete(username) # SETUP: comment out to populate whitelist
+
 @app.route('/vote', methods = ['POST'])
 def receive_vote():
     data = request.get_json(force=True)
@@ -103,12 +129,7 @@ def receive_vote():
     vote_dict = rsa_decryption(payload, 'server')
     vote_dict = ast.literal_eval(vote_dict)
 
-
     procExit = process_vote(vote_dict)
-
-
-    # needs to decrypt payload and e_sig
-
 
     # check that session id's user matches up with SSN and DOB in e-sig
     incorrect_e_sig = False
@@ -118,7 +139,10 @@ def receive_vote():
     unable_to_vote = False
     if (procExit == -2):
         unable_to_vote = True
-    # Vote
+
+    # Display vote tally server-side
+    print("--CURRENT TALLY--")
+    vote_tally()
 
     # If error return 401 for incorrect e_sig, 402 for inability to vote (and descriptive message)
     if incorrect_e_sig:
