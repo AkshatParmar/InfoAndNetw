@@ -39,7 +39,7 @@ def receive_register(voteJSON, e_sig):
 
     # Whitelist check
     whitelist_jda = JsonDataAccess("whitelist.json")
-    whitelist_jda.insert(True, username) # SETUP: keep for setup, comment out for demo
+    #whitelist_jda.insert(True, username) # SETUP: keep for setup, comment out for demo
 
     if whitelist_jda.search(username) is None: # User can't vote
         return -2
