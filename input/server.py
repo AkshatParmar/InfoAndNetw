@@ -124,7 +124,11 @@ def receive_vote():
     data = ast.literal_eval(data)
 
     payload = data["payload"]
+    e_sig = data['e_sig']
     vote_dict = rsa_decryption(payload, 'server')
+    e_sig = rsa_decryption(e_sig,'server')
+    e_sig = e_sig.split("_")
+    print(e_sig)
     vote_dict = ast.literal_eval(vote_dict)
 
     procExit = process_vote(vote_dict)

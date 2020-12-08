@@ -132,8 +132,8 @@ def submit_vote(session_id, ssn, dob, votes):
         identify = json.load(file)
     user_name = identify[session_id]["username"]
     private_key = user_name + '_private_key.pem'
-    e_signature = ssn + dob
-    e_signature = signature(e_signature, private_key)
+    e_signature = ssn + "_" + dob
+    e_signature = rsa_encryption(e_signature,'server')
 
 
     payload = {
