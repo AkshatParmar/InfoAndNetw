@@ -89,7 +89,7 @@ def register_user(jda, username, password, name, dob, ssn):
 
     # Encrypted Payload as Key, e-signature as the value
     dob_ssn_payload = {
-        username: {"SSN": encrypt_ssn , "DOB": encrypt_dob}
+        "SSN": encrypt_ssn , "DOB": encrypt_dob
     }
 
     # Verifier Payload to be sent to server

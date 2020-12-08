@@ -17,17 +17,15 @@ app = Flask(__name__)
 @app.route('/dobssn', methods= ['POST'])
 def receive_register():
     data = request.get_json(force=True)
-    data = ast.literal_eval(data)
+    data2 = ast.literal_eval(data)
 
-    user_name = list(data.keys())
+    ssn = data2["SSN"]
+    dob = data2['DOB']
 
-    ssn = data[user_name[0]]["SSN"]
-    dob = data[user_name[0]]["DOB"]
+    ssn_decrypt = rsa_decryption(ssn, 'server')
+    dob_decrypt = rsa_decryption(dob, 'server')
 
-    ssn_decrypt = rsa_decryption(ssn,'server')
-    dob_decrypt = rsa_decryption(dob,'server')
-
-    return (ssn_decrypt,dob_decrypt)
+    return '{} {}'.format(ssn_decrypt, dob_decrypt)
 
 def vote_tally():
     votes_jda = JsonDataAccess("votes.json")
